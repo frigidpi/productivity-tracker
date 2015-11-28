@@ -9,8 +9,12 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
+
+    int currentSum = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,7 +28,12 @@ public class MainActivity extends AppCompatActivity {
         taskButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Number added to total!", Snackbar.LENGTH_LONG)
+                EditText editText = (EditText) findViewById(R.id.edit_text);
+                Integer input = Integer.parseInt(editText.getText().toString());
+                currentSum += input;
+                TextView scoreTextView = (TextView) findViewById(R.id.score);
+                scoreTextView.setText(String.valueOf(currentSum));
+                Snackbar.make(view, "Added to productivity", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });

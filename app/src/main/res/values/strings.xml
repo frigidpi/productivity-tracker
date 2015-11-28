@@ -2,13 +2,8 @@
     <string name="app_name">Productivity Tracker</string>
     <string name="action_settings">Settings</string>
     <string-array name="planets_array">
-        <item>Mercury</item>
-        <item>Venus</item>
-        <item>Earth</item>
-        <item>Mars</item>
-        <item>Jupiter</item>
-        <item>Saturn</item>
-        <item>Uranus</item>
-        <item>Neptune</item>
+        <item>Work</item>
+        <item>Learn</item>
+        <item>Play</item>
     </string-array>
 </resources>

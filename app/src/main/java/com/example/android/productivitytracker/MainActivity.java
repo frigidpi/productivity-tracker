@@ -14,8 +14,11 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+
 public class MainActivity extends AppCompatActivity {
 
+    ArrayList<Task> tasks;
     int currentSum = 0;
 
     @Override
@@ -25,18 +28,23 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        tasks = new ArrayList<>();
 
         Button taskButton = (Button) findViewById(R.id.add_task_button);
         taskButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 EditText editText = (EditText) findViewById(R.id.edit_text);
-                Integer input = Integer.parseInt(editText.getText().toString());
-                currentSum += input;
+                Integer duration = Integer.parseInt(editText.getText().toString());
+                currentSum += duration;
                 TextView scoreTextView = (TextView) findViewById(R.id.score);
+                Spinner categorySpinner = (Spinner) findViewById(R.id.spinner);
+                String category = categorySpinner.getSelectedItem().toString();
                 scoreTextView.setText(String.valueOf(currentSum));
-                Snackbar.make(view, "Added to productivity", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                tasks.add(new Task(category, duration));
+                Snackbar.make(view,
+                        String.format("Added %d minutes of %s.", duration, category),
+                        Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
         });
 

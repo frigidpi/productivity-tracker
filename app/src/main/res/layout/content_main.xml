@@ -14,7 +14,29 @@
     tools:context=".MainActivity">
 
     <TextView
-        android:text="Hello World!"
+        android:text="Current sum Enter a number!"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:id="@+id/textView"
+        android:layout_marginTop="144dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:ems="10"
+        android:id="@+id/edit_text"
+        android:layout_below="@+id/textView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="71dp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enter"
+        android:id="@+id/add_task_button"
+        android:layout_below="@+id/edit_text"
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>

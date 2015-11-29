@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Productivity Tracker</string>
     <string name="action_settings">Settings</string>
+    <string name="action_delete">Delete</string>
     <string-array name="planets_array">
         <item>Work</item>
         <item>Learn</item>

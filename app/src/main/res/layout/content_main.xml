@@ -16,37 +16,43 @@
     tools:context=".MainActivity">
 
     <TextView
-        android:text="Score"
+        android:text="Score:"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/textView" />
+        android:textSize="40sp"
+        android:id="@+id/textView"
+        android:layout_gravity="center_horizontal" />
 
     <TextView
         android:text="0"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="26sp"
+        android:textSize="40sp"
         android:id="@+id/score" />
 
     <Spinner
-        android:layout_width="wrap_content"
+        android:layout_width="269dp"
         android:layout_height="wrap_content"
         android:padding="10dp"
+        android:text="40sp"
         android:id="@+id/spinner" />
 
     <EditText
-        android:layout_width="wrap_content"
+        android:layout_width="240dp"
         android:layout_height="wrap_content"
         android:inputType="number"
         android:ems="10"
         android:padding="10dp"
+        android:textSize="40sp"
         android:id="@+id/edit_text" />
 
     <Button
-        android:layout_width="wrap_content"
+        android:layout_width="231dp"
         android:layout_height="wrap_content"
-        android:text="Enter"
-        android:id="@+id/add_task_button" />
+        android:text="==>"
+        android:textSize="40sp"
+        android:id="@+id/add_task_button"
+        android:textColor="#fcf6f6" />
 
 
 </LinearLayout>

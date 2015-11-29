@@ -1,31 +1,32 @@
 package com.example.android.productivitytracker;
 
-import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
+    private Map<String, Integer> categoryIds = new HashMap<>();
     private TextView mScoreTextView;
-    private TaskDbHelper mDbHelper;
+    private DbHelper mDbHelper;
+    private ArrayAdapter<String> mSpinnerAdapter;
     private int currentSum = 0;
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
 
@@ -35,14 +36,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Create the task DB helper.
-        mDbHelper = new TaskDbHelper(getApplicationContext());
+        mDbHelper = new DbHelper(this);
         mScoreTextView = (TextView) findViewById(R.id.score);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         // Retrieve the data from the database, if any.
-        SQLSelectTask task = new SQLSelectTask();
+        CalculateScoreTask task = new CalculateScoreTask();
         task.execute();
 
         // Add listener to the button.
@@ -56,14 +57,15 @@ public class MainActivity extends AppCompatActivity {
 
                     Spinner categorySpinner = (Spinner) findViewById(R.id.spinner);
                     String category = categorySpinner.getSelectedItem().toString();
+                    int categoryId = categoryIds.get(category);
 
-                    SQLInsertTask task = new SQLInsertTask();
-                    task.execute(category, String.valueOf(duration));
+                    InsertTaskTask task = new InsertTaskTask();
+                    task.execute(categoryId, duration);
 
                     mScoreTextView.setText(String.valueOf(currentSum));
                     Snackbar.make(view,
-                            String.format("Added %d minutes of %s.", duration, category),
-                            Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                        String.format("Added %d minutes of %s.", duration, category),
+                    Snackbar.LENGTH_LONG).setAction("Action", null).show();
                 } catch (NumberFormatException e) {
                     Toast.makeText(getApplicationContext(), "Enter numbers <= 1440 (24 hours)!", Toast.LENGTH_SHORT).show();
                 }
@@ -72,12 +74,14 @@ public class MainActivity extends AppCompatActivity {
 
         Spinner spinner = (Spinner) findViewById(R.id.spinner);
         // Create an ArrayAdapter using the string array and a default spinner layout
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                R.array.planets_array, android.R.layout.simple_spinner_item);
-        // Specify the layout to use when the list of choices appears
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpinnerAdapter = new ArrayAdapter<String>(this,
+                R.layout.support_simple_spinner_dropdown_item, new ArrayList<String>());
         // Apply the adapter to the spinner
-        spinner.setAdapter(adapter);
+        spinner.setAdapter(mSpinnerAdapter);
+
+        // Select categories from the database and populate spinner.
+        SelectAllCategoriesTask categoriesTask = new SelectAllCategoriesTask();
+        categoriesTask.execute();
     }
 
     @Override
@@ -100,10 +104,13 @@ public class MainActivity extends AppCompatActivity {
         } else if (id == R.id.action_delete){
             mScoreTextView.setText(String.valueOf(0));
 
-            SQLDelete task = new SQLDelete();
+            RecreateDbTask task = new RecreateDbTask();
             task.execute();
             currentSum = 0;
             return true;
+        } else if (id == R.id.action_add_category) {
+            Intent intent = new Intent(this, CategoryActivity.class);
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);
@@ -112,37 +119,65 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Async task that inserts a task into the database.
      */
-    public class SQLInsertTask extends AsyncTask<String, Void, Void> {
+    public class InsertTaskTask extends AsyncTask<Integer, Void, Void> {
         @Override
-        protected Void doInBackground(String... params) {
-            // Gets the data repository in write mode
-            SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-            // Create a new map of values, where column names are the keys
-            ContentValues values = new ContentValues();
-            values.put(TaskContract.TaskEntry.COLUMN_NAME_CATEGORY, params[0]);
-            values.put(TaskContract.TaskEntry.COLUMN_NAME_DURATION, Integer.parseInt(params[1]));
-
-            // Insert the new row, returning the primary key value of the new row
-            long newRowId = db.insert(
-                    TaskContract.TaskEntry.TABLE_NAME,
-                    null,
-                    values);
+        protected Void doInBackground(Integer... params) {
+            mDbHelper.insertTask(params[0], params[1]);
             return null;
+        }
+    }
+
+    /**
+     * Selects all categories and saves their IDs and names.
+     */
+    public class SelectAllCategoriesTask extends AsyncTask<Void, Void, ArrayList<String>> {
+        @Override
+        protected ArrayList<String> doInBackground(Void... params) {
+            // Gets the data repository in read mode
+            SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+            // Define a projection that specifies which columns from the database
+            // you will actually use after this query.
+            String[] projection = {CategoryContract.CategoryEntry._ID,
+                    CategoryContract.CategoryEntry.COLUMN_NAME_NAME};
+
+            String selection = null;
+            String[] selectionArgs = null;
+
+            Cursor c = db.query(
+                    CategoryContract.CategoryEntry.TABLE_NAME, projection,
+                    selection,     // The columns for the WHERE clause
+                    selectionArgs, // The values for the WHERE clause
+                    null, null, null
+            );
+
+            ArrayList<String> categories = new ArrayList<>();
+            // Cursors start at position -1.
+            while (c.moveToNext()) {
+                int id = c.getInt(c.getColumnIndex(CategoryContract.CategoryEntry._ID));
+                String category = c.getString(c.getColumnIndex(CategoryContract.CategoryEntry.COLUMN_NAME_NAME));
+                categories.add(category);
+                categoryIds.put(category, id);
+            }
+            return categories;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<String> result) {
+            super.onPostExecute(result);
+            mSpinnerAdapter.addAll(result);
         }
     }
 
     /**
      * Async task that deletes the database.
      */
-    public class SQLDelete extends AsyncTask<Void, Void, Void> {
+    public class RecreateDbTask extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... params) {
             // Gets the data repository in write mode
-            SQLiteDatabase db = mDbHelper.getWritableDatabase();
             //db.execSQL(SQL_CREATE_ENTRIES);
-            mDbHelper.deleteAll(db);
-
+            mDbHelper.dropAndCreateTable();
             return null;
         }
     }
@@ -150,40 +185,10 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Async task that aggregates tasks from the database.
      */
-    public class SQLSelectTask extends AsyncTask<Void, Void, Integer> {
+    public class CalculateScoreTask extends AsyncTask<Void, Void, Integer> {
         @Override
         protected Integer doInBackground(Void... params) {
-            // Gets the data repository in read mode
-            SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-            // Define a projection that specifies which columns from the database
-            // you will actually use after this query.
-            String[] projection = {
-                    TaskContract.TaskEntry._ID,
-                    TaskContract.TaskEntry.COLUMN_NAME_CATEGORY,
-                    TaskContract.TaskEntry.COLUMN_NAME_DURATION};
-
-            String selection = null;
-            String[] selectionArgs = null;
-
-            Cursor c = db.query(
-                    TaskContract.TaskEntry.TABLE_NAME,  // The table to query
-                    projection,                               // The columns to return
-                    selection,                                // The columns for the WHERE clause
-                    selectionArgs,                            // The values for the WHERE clause
-                    null,                                     // don't group the rows
-                    null,                                     // don't filter by row groups
-                    null                                      // No sort order
-            );
-
-            Integer sum = 0;
-            // Cursors start at position -1.
-            while (c.moveToNext()) {
-                int duration = c.getInt(c.getColumnIndex(TaskContract.TaskEntry.COLUMN_NAME_DURATION));
-                sum += duration;
-            }
-
-            return sum;
+            return mDbHelper.calculateScore();
         }
 
         @Override

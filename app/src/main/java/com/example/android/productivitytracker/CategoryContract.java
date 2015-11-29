@@ -20,6 +20,6 @@ public final class CategoryContract {
         public static final String COLUMN_NAME_GOAL = "goal";
 
         // Limit for this category.
-        public static final String COLUMN_NAME_LIMIT = "limit";
+        public static final String COLUMN_NAME_LIMIT = "threshold";
     }
 }

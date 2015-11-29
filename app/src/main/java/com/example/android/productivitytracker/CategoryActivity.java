@@ -1,7 +1,10 @@
 package com.example.android.productivitytracker;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -13,6 +16,7 @@ import android.view.View;
 import android.widget.Adapter;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -20,6 +24,7 @@ import java.util.ArrayList;
 
 public class CategoryActivity extends AppCompatActivity {
     private ArrayAdapter<String> mAdapter;
+    private DbHelper mDbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,36 +33,20 @@ public class CategoryActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // Create the adapter for the category list view.
-        ListView listView = (ListView) findViewById(R.id.category_list_view);
-        mAdapter = new ArrayAdapter<String>(this,
-                R.layout.list_item_category, R.id.list_item_category_textview, new ArrayList<String>());
-        listView.setAdapter(mAdapter);
+        mDbHelper = new DbHelper(this);
 
         findViewById(R.id.category_add_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // Set up the input
-                final EditText input = new EditText(CategoryActivity.this);
-
-                // Display a dialog for users to input the category name.
-                new AlertDialog.Builder(CategoryActivity.this)
-                        .setTitle("Add a Category")
-                        .setMessage("Enter the name of your category:")
-                        .setView(input)
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                String text = input.getText().toString();
-                                mAdapter.add(text);
-                            }
-                        })
-                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.cancel();
-                            }
-                        }).show();
+                EditText nameInput = (EditText) findViewById(R.id.category_add_name);
+                EditText thresholdInput = (EditText) findViewById(R.id.category_add_threshold);
+                EditText goalInput = (EditText) findViewById(R.id.category_add_goal);
+                EditText weightInput = (EditText) findViewById(R.id.category_add_weight);
+                AddCategoryTask task = new AddCategoryTask();
+                task.execute(nameInput.getText().toString(),
+                        weightInput.getText().toString(),
+                        goalInput.getText().toString(),
+                        thresholdInput.getText().toString());
             }
         });
 
@@ -71,5 +60,22 @@ public class CategoryActivity extends AppCompatActivity {
             }
         });
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);*/
+    }
+
+    public class AddCategoryTask extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... params) {
+            mDbHelper.insertCategory(params[0], Integer.parseInt(params[1]),
+                    Integer.parseInt(params[2]), Integer.parseInt(params[3]));
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            Intent intent = new Intent(CategoryActivity.this, MainActivity.class);
+            startActivity(intent);
+        }
     }
 }

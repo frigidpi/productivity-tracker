@@ -64,8 +64,8 @@ public class MainActivity extends AppCompatActivity {
                     Snackbar.make(view,
                             String.format("Added %d minutes of %s.", duration, category),
                             Snackbar.LENGTH_LONG).setAction("Action", null).show();
-                } catch (NumberFormatException e){
-                    Toast.makeText(getApplicationContext(),"Enter numbers <= 1440 (24 hours)!",Toast.LENGTH_SHORT).show();
+                } catch (NumberFormatException e) {
+                    Toast.makeText(getApplicationContext(), "Enter numbers <= 1440 (24 hours)!", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -98,6 +98,11 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.action_settings) {
             return true;
         } else if (id == R.id.action_delete){
+            mScoreTextView.setText(String.valueOf(0));
+
+            SQLDelete task = new SQLDelete();
+            task.execute();
+            currentSum = 0;
             return true;
         }
 

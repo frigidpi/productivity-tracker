@@ -19,6 +19,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 EditText editText = (EditText) findViewById(R.id.edit_text);
+<<<<<<< HEAD
                 Integer duration = Integer.parseInt(editText.getText().toString());
                 currentSum += duration;
 
@@ -63,6 +65,23 @@ public class MainActivity extends AppCompatActivity {
                 Snackbar.make(view,
                         String.format("Added %d minutes of %s.", duration, categoryId),
                         Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                try {
+		Integer duration = Integer.parseInt(editText.getText().toString());
+		currentSum += duration;
+
+		Spinner categorySpinner = (Spinner) findViewById(R.id.spinner);
+		int categoryId = (int) categorySpinner.getSelectedItemId();
+
+		SQLInsertTask task = new SQLInsertTask();
+		task.execute(categoryId, duration);
+
+		mScoreTextView.setText(String.valueOf(currentSum));
+		Snackbar.make(view,
+			String.format("Added %d minutes of %s.", duration, categoryId),
+			Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                } catch (NumberFormatException e) {
+                    Toast.makeText(getApplicationContext(), "Enter numbers <= 1440 (24 hours)!", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -94,6 +113,11 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.action_settings) {
             return true;
         } else if (id == R.id.action_delete){
+            mScoreTextView.setText(String.valueOf(0));
+
+            SQLDelete task = new SQLDelete();
+            task.execute();
+            currentSum = 0;
             return true;
         } else if (id == R.id.action_add_category) {
             Intent intent = new Intent(this, CategoryActivity.class);
@@ -110,6 +134,21 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Integer... params) {
             mDbHelper.insertTask(params[0], params[1]);
+            return null;
+        }
+    }
+
+    /**
+     * Async task that deletes the database.
+     */
+    public class SQLDelete extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            // Gets the data repository in write mode
+            SQLiteDatabase db = mDbHelper.getWritableDatabase();
+            //db.execSQL(SQL_CREATE_ENTRIES);
+            mDbHelper.deleteAll(db);
+
             return null;
         }
     }

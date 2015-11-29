@@ -72,4 +72,9 @@ public class TaskDbHelper extends AbstractDbHelper {
 
         return sum;
     }
+
+    public void deleteAll(SQLiteDatabase db) {
+        //db.execSQL(SQL_DELETE_ENTRIES);
+        db.delete(TaskEntry.TABLE_NAME,null,null);  
+    }
 }

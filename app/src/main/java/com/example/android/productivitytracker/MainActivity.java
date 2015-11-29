@@ -1,6 +1,7 @@
 package com.example.android.productivitytracker;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
@@ -53,14 +54,14 @@ public class MainActivity extends AppCompatActivity {
                 currentSum += duration;
 
                 Spinner categorySpinner = (Spinner) findViewById(R.id.spinner);
-                String category = categorySpinner.getSelectedItem().toString();
+                int categoryId = (int) categorySpinner.getSelectedItemId();
 
                 SQLInsertTask task = new SQLInsertTask();
-                task.execute(category, String.valueOf(duration));
+                task.execute(categoryId, duration);
 
                 mScoreTextView.setText(String.valueOf(currentSum));
                 Snackbar.make(view,
-                        String.format("Added %d minutes of %s.", duration, category),
+                        String.format("Added %d minutes of %s.", duration, categoryId),
                         Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
         });
@@ -94,6 +95,9 @@ public class MainActivity extends AppCompatActivity {
             return true;
         } else if (id == R.id.action_delete){
             return true;
+        } else if (id == R.id.action_add_category) {
+            Intent intent = new Intent(this, CategoryActivity.class);
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);
@@ -102,22 +106,10 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Async task that inserts a task into the database.
      */
-    public class SQLInsertTask extends AsyncTask<String, Void, Void> {
+    public class SQLInsertTask extends AsyncTask<Integer, Void, Void> {
         @Override
-        protected Void doInBackground(String... params) {
-            // Gets the data repository in write mode
-            SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-            // Create a new map of values, where column names are the keys
-            ContentValues values = new ContentValues();
-            values.put(TaskContract.TaskEntry.COLUMN_NAME_CATEGORY, params[0]);
-            values.put(TaskContract.TaskEntry.COLUMN_NAME_DURATION, Integer.parseInt(params[1]));
-
-            // Insert the new row, returning the primary key value of the new row
-            long newRowId = db.insert(
-                    TaskContract.TaskEntry.TABLE_NAME,
-                    null,
-                    values);
+        protected Void doInBackground(Integer... params) {
+            mDbHelper.insertTask(params[0], params[1]);
             return null;
         }
     }
@@ -128,37 +120,7 @@ public class MainActivity extends AppCompatActivity {
     public class SQLSelectTask extends AsyncTask<Void, Void, Integer> {
         @Override
         protected Integer doInBackground(Void... params) {
-            // Gets the data repository in read mode
-            SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-            // Define a projection that specifies which columns from the database
-            // you will actually use after this query.
-            String[] projection = {
-                    TaskContract.TaskEntry._ID,
-                    TaskContract.TaskEntry.COLUMN_NAME_CATEGORY,
-                    TaskContract.TaskEntry.COLUMN_NAME_DURATION};
-
-            String selection = null;
-            String[] selectionArgs = null;
-
-            Cursor c = db.query(
-                    TaskContract.TaskEntry.TABLE_NAME,  // The table to query
-                    projection,                               // The columns to return
-                    selection,                                // The columns for the WHERE clause
-                    selectionArgs,                            // The values for the WHERE clause
-                    null,                                     // don't group the rows
-                    null,                                     // don't filter by row groups
-                    null                                      // No sort order
-            );
-
-            Integer sum = 0;
-            // Cursors start at position -1.
-            while (c.moveToNext()) {
-                int duration = c.getInt(c.getColumnIndex(TaskContract.TaskEntry.COLUMN_NAME_DURATION));
-                sum += duration;
-            }
-
-            return sum;
+            return mDbHelper.calculateScore();
         }
 
         @Override

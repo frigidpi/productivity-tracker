@@ -7,4 +7,6 @@
         <item>Learn</item>
         <item>Play</item>
     </string-array>
+    <string name="title_activity_category">Add Categories</string>
+    <string name="action_add_category">Add Category</string>
 </resources>
